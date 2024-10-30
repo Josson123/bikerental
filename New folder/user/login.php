@@ -44,32 +44,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Bike Rental</title>
-    <link rel="stylesheet" href="styles.css">
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>RevRides Login </title>
+     <link rel="stylesheet" href="login_style.css">
 </head>
 <body>
-    <div class="register-container">
-        <h2>Login</h2>
+       <div class="wrapper">
+            <?php if (!empty($loginError)): ?>
+                <p style="color:red;"><?php echo $loginError; ?></p>
+            <?php endif; ?>
 
-        <?php if (!empty($loginError)): ?>
-            <p style="color:red;"><?php echo $loginError; ?></p>
-        <?php endif; ?>
-
-        <form action="login.php" method="POST">
-            <div class="form-group">
-                <label for="username">Username:</label>
-                <input type="text" id="username" name="username" required>
+            <h2>Login</h2>
+            <!-- Add the form tag here -->
+            <form action="login.php" method="POST">
+                <div class="input-field">
+                    <input type="text" name="username" required>
+                    <label>Username</label>
+                </div>
+                <div class="input-field">
+                    <input type="password" name="password" required>
+                    <label>Password</label>
+                </div>
+                <button type="submit">Log In</button>
+            </form>
+            
+            <div class="register">
+                <p>Don't have an account? <a href="New Profile.php">Register</a></p>
             </div>
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <button type="submit">Login</button>
-        </form>
-
-        <p>New User? <a href="New Profile.php">Sign Up</a></p>
-    </div>
+       </div>
 </body>
 </html>
