@@ -1,43 +1,117 @@
 <?php
- include("includes.php");
-?> 
+session_start();
+$conn = new mysqli("localhost", "root", "", "bikerental");
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+$usernameTaken = false;
+$emailTaken = false;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
+    $username = $_POST['username'];
+    $email = $_POST['email'];
+    $password = $_POST['password'];
+    $number = $_POST['phoneno'];
+
+    // Check if username or email already exists
+    $query = "SELECT * FROM user WHERE user_name = ? OR email = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("ss", $username, $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            if ($row['user_name'] === $username) {
+                $usernameTaken = true;
+            }
+            if ($row['email'] === $email) {
+                $emailTaken = true;
+            }
+        }
+    } else {
+        // Encrypt password and insert into database
+        $pass_encode = password_hash($password, PASSWORD_DEFAULT);
+        $insert = "INSERT INTO user (user_name, email, password, phone_no) VALUES (?, ?, ?, ?)";
+        
+        if ($stmt = $conn->prepare($insert)) {
+            $stmt->bind_param("ssss", $username, $email, $pass_encode, $number);
+            if ($stmt->execute()) {
+                header('Location: login.php');
+                exit();
+            } else {
+                echo "Error: " . $stmt->error;
+            }
+            $stmt->close();
+        } else {
+            echo "Error preparing statement: " . $conn->error;
+        }
+    }
+    $stmt->close();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Bike Rental System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="styles.css">
+    <title>Sign Up - RevRides Rental</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="login_style.css">
 </head>
 <body>
-   
     <main>
-        <section class="login-form">
-            <h2>Sign up</h2>
-            <form action="insert.php" method="POST">
+        <div class="wrapper">
+            <h2>Sign Up</h2>
+            <form action="New profile.php" method="POST" onsubmit="return validateForm()">
+                
+                <div class="input-field">
+                    <input type="text" name="username" id="username" maxlength="20" required>
+                    <label for="username">Username</label>
+                    <?php if ($usernameTaken): ?>
+                        <p class="error-message" id="username-error" style="color: red;">Username already taken</p>
+                    <?php endif; ?>
+                </div>
+                
+                <div class="input-field">
+                    <input type="password" name="password" id="password" maxlength="10" required>
+                    <label for="password">Password</label>
+                </div>
 
-            
-     <label for="username">Username</label>
-     <input type="text" name="username" >
-    <br>
-     <label for="password">password</label>
-     <input type="password" name="password" >
-    <br>
-      <label for="phoneno">Phone number</label>
-     <input type="text" name="phoneno" >
-     <br>
-     <label for="email">email</label>
-     <input type="email" name="email" >
-    <br>
-     <input type="submit" value="submit" name="submit">
-     
+                <div class="input-field">
+                    <input type="text" name="phoneno" id="phoneno" pattern="\d{10}" required>
+                    <label for="phoneno">Phone Number</label>
+                </div>
+               
+                <div class="input-field">
+                    <input type="email" name="email" id="email" required>
+                    <label for="email">Email</label>
+                    <?php if ($emailTaken): ?>
+                        <p class="error-message" id="email-error" style="color: red;">Email already taken</p>
+                    <?php endif; ?>
+                </div>
+                
+                <button type="submit" name="submit">Submit</button>
             </form>
-        </section>
+            <div class="register">
+                <p>Already have an account? <a href="login.php">Login</a></p>
+            </div>
+        </div>
     </main>
 
-   
-   <!---- <script src="scripts1.php"></script>-->
+    <!-- JavaScript to auto-hide error messages -->
+    <script>
+        // Hide error messages after a few seconds
+        setTimeout(() => {
+            const usernameError = document.getElementById('username-error');
+            const emailError = document.getElementById('email-error');
+            if (usernameError) usernameError.style.display = 'none';
+            if (emailError) emailError.style.display = 'none';
+        }, 1000); // Hides after 1 second
+    </script>
 </body>
 </html>
